@@ -1,0 +1,21 @@
+<html>
+
+<head>
+
+</head>
+
+<body>
+  <canvas id='view'></canvas>
+  <script type='module'>
+
+    import Client from './src/client.mjs'
+
+    const view = document.getElementById('view')
+    const proto = { 'http:': 'ws:', 'https:': 'wss:' }[location.protocol]
+    const url = `${proto}//${location.host}`
+    const client = new Client(url, view)
+
+  </script>
+</body>
+
+</html>
