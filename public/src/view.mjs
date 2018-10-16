@@ -144,9 +144,12 @@ export default class View {
 
     // pilot name
     if (player) {
-      ctx.fillStile = '#fff'
+      ctx.fillStyle = '#fff'
+      ctx.strokeStyle = '#000'
+      ctx.lineWidth = 4
       ctx.font = '24px serif'
       ctx.textAlign = 'center'
+      ctx.strokeText(player.name, w * 0.5, 33)
       ctx.fillText(player.name, w * 0.5, 32)
     }
   }
