@@ -1,8 +1,8 @@
-import { PLANE_1, PLANE_2, PLANE_3, GRASS } from './images.mjs'
+import { PLANE_1, PLANE_2, PLANE_3, GRASS, SPARK } from './images.mjs'
 import Sprite from './sprite.mjs'
 
 const SHADOW_DISTANCE = 100
-const BULLET_SPEED = 40
+const BULLET_SPEED = 50
 const BULLET_LIFE = 30
 
 export default class View {
@@ -35,6 +35,8 @@ export default class View {
     await this.planes[0].load()
     this.shadow = this.planes[0].shadowed(0.7)
     this.shadow.load()
+    this.spark = new Sprite(SPARK)
+    this.spark.load()
   }
   resize() {
     this.canvas.width = window.innerWidth
@@ -92,7 +94,7 @@ export default class View {
         const plane = this.planes[pi].frame(this.frame)
         if (!plane) return
 
-        if (e.f && this.frame % 2 === 0) {
+        if (e.f && this.frame % 3 === 0) {
           const angle = e.a - Math.PI / 2 + (Math.random() * 0.2 - 0.1)
           this.bullets.add({
             x: e.x + Math.cos(angle) * plane.height * 0.25,
@@ -123,6 +125,7 @@ export default class View {
     })
 
     // render bullets
+    const spark = this.spark.frame(0)
     ctx.fillStyle = '#fff'
     ctx.strokeStyle = '#ffff99'
     ctx.lineCap = 'round'
@@ -143,11 +146,12 @@ export default class View {
       ctx.closePath()
       ctx.stroke()
 
-      const pix = hit.getImageData(b.x + 1000, b.y + 1000, 1, 1).data
-      if (pix[3] > 0) {
-        console.log('wtf')
-        ctx.fillStyle = '#fff'
-        ctx.fillRect(b.x - 5, b.y - 5, 10, 10)
+      if (spark) {
+        const pix = hit.getImageData(b.x + 1000, b.y + 1000, 1, 1).data
+        if (pix[3] > 0) {
+          ctx.drawImage(spark, b.x - spark.width * 0.5, b.y - spark.height * 0.5)
+          this.bullets.delete(b)
+        }
       }
     })
 
