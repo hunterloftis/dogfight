@@ -15,6 +15,10 @@ export default class View {
     this.ctx = canvas.getContext('2d')
     this.frame = 0
     this.bullets = new Set()
+    this.hitMask = document.createElement('canvas')
+    this.hitMask.width = 2000
+    this.hitMask.height = 2000
+    this.hitCtx = this.hitMask.getContext('2d')
     this.resize()
     this.load()
     window.addEventListener('resize', e => this.resize())
@@ -38,6 +42,7 @@ export default class View {
   }
   render(entities, id, historyTime, predictTime, latestTime) {
     const ctx = this.ctx
+    const hit = this.hitCtx
     const w = this.canvas.width
     const h = this.canvas.height
 
@@ -46,12 +51,15 @@ export default class View {
     ctx.clearRect(0, 0, w, h) // TODO: should be unnecessary
     ctx.save()
 
+    hit.clearRect(0, 0, this.hitMask.width, this.hitMask.height)
+
     const player = entities.find(en => en.id === id)
 
     ctx.translate(w * 0.5, h * 0.6)
+
     if (player) {
       ctx.rotate(-player.a)
-      ctx.translate(- player.x, - player.y)
+      ctx.translate(-player.x, -player.y)
     }
 
     // render tiles
@@ -99,6 +107,12 @@ export default class View {
         ctx.rotate(e.a)
         ctx.drawImage(plane, plane.width * -0.5, plane.height * -0.4)
         ctx.restore()
+
+        hit.save()
+        hit.translate(e.x + 1000, e.y + 1000)
+        hit.rotate(e.a)
+        hit.drawImage(plane, plane.width * -0.5, plane.height * -0.4)
+        hit.restore()
       } else if (e.t === 2) {
         ctx.save()
         ctx.translate(e.x, e.y)
@@ -121,11 +135,20 @@ export default class View {
       }
       b.x += b.vx
       b.y += b.vy
+      const bx2 = b.x - b.vx * 1
+      const by2 = b.y - b.vy * 1
       ctx.beginPath()
       ctx.moveTo(b.x, b.y)
-      ctx.lineTo(b.x - b.vx * 1, b.y - b.vy * 1)
+      ctx.lineTo(bx2, by2)
       ctx.closePath()
       ctx.stroke()
+
+      const pix = hit.getImageData(b.x + 1000, b.y + 1000, 1, 1).data
+      if (pix[3] > 0) {
+        console.log('wtf')
+        ctx.fillStyle = '#fff'
+        ctx.fillRect(b.x - 5, b.y - 5, 10, 10)
+      }
     })
 
     ctx.restore()
