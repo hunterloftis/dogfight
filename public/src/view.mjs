@@ -75,6 +75,8 @@ export default class View {
     // render shadows
     entities.forEach(e => {
       if (e.t === 1) {
+        if (e.h <= 0) return
+
         const shadow = this.shadow.frame(this.frame)
         if (!shadow) return
 
@@ -90,6 +92,8 @@ export default class View {
     // render entities
     entities.forEach(e => {
       if (e.t === 1) {
+        if (e.h <= 0) return
+
         const pi = e.id % this.planes.length
         const plane = this.planes[pi].frame(this.frame)
         if (!plane) return
