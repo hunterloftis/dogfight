@@ -73,7 +73,7 @@ export default class Ship extends Entity {
   interact(tick, other) {
     if (!this.f) return
     if (other.t !== 1) return
-    if (other.h <= 0) return
+    if (other.h <= 0 || this.h <= 0) return
     if (other === this) return
 
     const dx = other.x - this.x
