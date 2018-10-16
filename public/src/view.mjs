@@ -1,13 +1,6 @@
 import { PLANE_1, PLANE_2, PLANE_3, GRASS } from './images.mjs'
 import Sprite from './sprite.mjs'
 
-const PLANES = [
-  new Sprite(PLANE_1, 4),
-  new Sprite(PLANE_2, 4),
-  new Sprite(PLANE_3, 4),
-]
-const GRASS_TILE = new Sprite(GRASS)
-const SHADOWS = PLANES[0].shadowed(0.7)
 const SHADOW_DISTANCE = 100
 const BULLET_SPEED = 40
 const BULLET_LIFE = 30
@@ -23,7 +16,21 @@ export default class View {
     this.frame = 0
     this.bullets = new Set()
     this.resize()
+    this.load()
     window.addEventListener('resize', e => this.resize())
+  }
+  async load() {
+    this.planes = [
+      new Sprite(PLANE_1, 4),
+      new Sprite(PLANE_2, 4),
+      new Sprite(PLANE_3, 4),
+    ]
+    this.planes.forEach(p => p.load())
+    this.grass = new Sprite(GRASS)
+    this.grass.load()
+    await this.planes[0].load()
+    this.shadow = this.planes[0].shadowed(0.7)
+    this.shadow.load()
   }
   resize() {
     this.canvas.width = window.innerWidth
@@ -36,8 +43,6 @@ export default class View {
 
     this.frame++
 
-    // ctx.fillStyle = 'rgb(0, 0, 0, 0.7)'
-    // ctx.fillRect(0, 0, w, h)
     ctx.clearRect(0, 0, w, h) // TODO: should be unnecessary
     ctx.save()
 
@@ -50,7 +55,7 @@ export default class View {
     }
 
     // render tiles
-    const tile = GRASS_TILE.frame(0)
+    const tile = this.grass.frame(0)
     for (let y = -1000; y < 1000; y += tile.height) {
       for (let x = -1000; x < 1000; x += tile.width) {
         ctx.drawImage(tile, x, y)
@@ -60,40 +65,40 @@ export default class View {
     // render shadows
     entities.forEach(e => {
       if (e.t === 1) {
-        const shadow = SHADOWS.frame(this.frame)
-        if (shadow) {
-          ctx.save()
-          ctx.translate(e.x, e.y + SHADOW_DISTANCE)
-          ctx.rotate(e.a)
-          ctx.globalAlpha = 0.33
-          ctx.drawImage(shadow, shadow.width * -0.5, shadow.height * -0.4)
-          ctx.restore()
-        }
+        const shadow = this.shadow.frame(this.frame)
+        if (!shadow) return
+
+        ctx.save()
+        ctx.translate(e.x, e.y + SHADOW_DISTANCE)
+        ctx.rotate(e.a)
+        ctx.globalAlpha = 0.33
+        ctx.drawImage(shadow, shadow.width * -0.5, shadow.height * -0.4)
+        ctx.restore()
       }
     })
 
     // render entities
     entities.forEach(e => {
       if (e.t === 1) {
-        const pi = e.id % PLANES.length
-        const plane = PLANES[pi].frame(this.frame)
-        if (plane) {
-          if (e.f && this.frame % 2 === 0) {
-            const angle = e.a - Math.PI / 2 + (Math.random() * 0.2 - 0.1)
-            this.bullets.add({
-              x: e.x + Math.cos(angle) * plane.height * 0.25,
-              y: e.y + Math.sin(angle) * plane.height * 0.25,
-              vx: Math.cos(angle) * (BULLET_SPEED + Math.random() * 25),
-              vy: Math.sin(angle) * (BULLET_SPEED + Math.random() * 25),
-              life: BULLET_LIFE,
-            })
-          }
-          ctx.save()
-          ctx.translate(e.x, e.y)
-          ctx.rotate(e.a)
-          ctx.drawImage(plane, plane.width * -0.5, plane.height * -0.4)
-          ctx.restore()
+        const pi = e.id % this.planes.length
+        const plane = this.planes[pi].frame(this.frame)
+        if (!plane) return
+
+        if (e.f && this.frame % 2 === 0) {
+          const angle = e.a - Math.PI / 2 + (Math.random() * 0.2 - 0.1)
+          this.bullets.add({
+            x: e.x + Math.cos(angle) * plane.height * 0.25,
+            y: e.y + Math.sin(angle) * plane.height * 0.25,
+            vx: Math.cos(angle) * (BULLET_SPEED + Math.random() * 25),
+            vy: Math.sin(angle) * (BULLET_SPEED + Math.random() * 25),
+            life: BULLET_LIFE,
+          })
         }
+        ctx.save()
+        ctx.translate(e.x, e.y)
+        ctx.rotate(e.a)
+        ctx.drawImage(plane, plane.width * -0.5, plane.height * -0.4)
+        ctx.restore()
       } else if (e.t === 2) {
         ctx.save()
         ctx.translate(e.x, e.y)

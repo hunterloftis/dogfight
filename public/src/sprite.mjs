@@ -1,20 +1,29 @@
 export default class Sprite {
   constructor(srcList, duration = 1) {
-    this.waiting = 0
+    this.pending = srcList
     this.duration = duration
-    this.images = srcList.map(src => {
-      this.waiting++
-      const img = new Image()
-      img.src = src
-      img.addEventListener('load', () => this.waiting--)
-      return img
+    this.images = []
+  }
+  async load() {
+    return new Promise((resolve, reject) => {
+      let loading = this.pending.length
+      if (!loading) return resolve()
+
+      this.images = this.pending.map(src => {
+        const img = new Image()
+        img.addEventListener('load', () => {
+          if (--loading === 0) {
+            this.pending = []
+            resolve()
+          }
+        })
+        img.src = src
+        return img
+      })
     })
   }
-  ready() {
-    return this.waiting === 0
-  }
   frame(n) {
-    if (!this.ready()) return
+    if (this.pending.length) return
     const i = Math.floor(n / this.duration) % this.images.length
     return this.images[i]
   }
@@ -33,6 +42,5 @@ function shadow(img, scale) {
   ctx.globalCompositeOperation = 'source-atop'
   ctx.fillStyle = '#000'
   ctx.fillRect(0, 0, canvas.width, canvas.height)
-  console.log(canvas.width, canvas.height)  // TODO: remove this hack
   return canvas.toDataURL()
 }
