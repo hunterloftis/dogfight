@@ -130,17 +130,7 @@ export default class View {
 
     ctx.restore()
 
-    // debug info
-    if (this.frame % 20 === 0) {
-      this.histT = Math.round(historyTime)
-      this.predT = Math.round(predictTime)
-      this.lateT = Math.round(latestTime)
-    }
-    const predict = this.predT - this.histT
-    const behind = this.lateT - this.histT
-    ctx.fillStyle = '#fff'
-    ctx.font = '14px sans-serif'
-    ctx.fillText(`host: ${this.histT}  client: ${this.predT}  predict ahead: ${predict}  behind latest: ${behind}`, 20, 20)
+    this.renderDebug(ctx, w, h, historyTime, predictTime, latestTime)
 
     // pilot name
     if (player) {
@@ -152,6 +142,24 @@ export default class View {
       ctx.strokeText(player.name, w * 0.5, 33)
       ctx.fillText(player.name, w * 0.5, 32)
     }
+  }
+  renderDebug(ctx, w, h, historyTime, predictTime, latestTime) {
+    ctx.save()
+    if (this.frame % 20 === 0) {
+      this.histT = Math.round(historyTime)
+      this.predT = Math.round(predictTime)
+      this.lateT = Math.round(latestTime)
+    }
+    const predict = this.predT - this.histT
+    const behind = this.lateT - this.histT
+    ctx.textAlign = 'right'
+    ctx.fillStyle = '#fff'
+    ctx.font = '14px sans-serif'
+    const stats = [`prediction (ahead): ${predict}`, `interpolation (behind): ${behind}`]
+    stats.forEach((str, i) => {
+      ctx.fillText(str, w - 32, 64 + i * 32)
+    })
+    ctx.restore()
   }
   bounds() {
     const w = this.canvas.width
