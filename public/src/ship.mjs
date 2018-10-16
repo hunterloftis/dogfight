@@ -4,7 +4,7 @@ import Missile from './missile.mjs'
 const TURN_SPEED = 1
 const SPEED = 150
 const TELEPORT_LIMIT = 100
-const BULLET_DAMAGE = 0.008
+const BULLET_DAMAGE = 0.007
 const BULLET_DISTANCE = 1000
 const TARGETING_ANGLE = Math.PI / 32
 
@@ -42,10 +42,12 @@ export default class Ship extends Entity {
   simulate(tick, inputs = {}) {
     const secs = tick / 1000
 
-    this.m = Math.max(this.m - secs, 0)
-
-    if (inputs.L) this.a -= secs * TURN_SPEED
-    if (inputs.R) this.a += secs * TURN_SPEED
+    if (this.h <= 0) {
+      this.h -= secs
+    } else {
+      if (inputs.L) this.a -= secs * TURN_SPEED
+      if (inputs.R) this.a += secs * TURN_SPEED
+    }
 
     const angle = this.a - Math.PI / 2
     const dx = Math.cos(angle)
@@ -65,7 +67,7 @@ export default class Ship extends Entity {
   interact(tick, other) {
     if (!this.f) return
     if (other.t !== 1) return
-    if (!other.h) return
+    if (other.h <= 0) return
 
     const dx = other.x - this.x
     const dy = other.y - this.y

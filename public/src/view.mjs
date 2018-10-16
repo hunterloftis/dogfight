@@ -1,4 +1,3 @@
-import { PLANE_1, PLANE_2, PLANE_3, GRASS, SPARK } from './images.mjs'
 import Sprite from './sprite.mjs'
 
 const SHADOW_DISTANCE = 100
@@ -25,18 +24,20 @@ export default class View {
   }
   async load() {
     this.planes = [
-      new Sprite(PLANE_1, 4),
-      new Sprite(PLANE_2, 4),
-      new Sprite(PLANE_3, 4),
+      new Sprite(['/img/plane1-0.png', '/img/plane1-1.png', '/img/plane1-2.png'], 4),
+      new Sprite(['/img/plane2-0.png', '/img/plane2-1.png', '/img/plane2-2.png'], 4),
+      new Sprite(['/img/plane3-0.png', '/img/plane3-1.png', '/img/plane3-2.png'], 4),
     ]
     this.planes.forEach(p => p.load())
-    this.grass = new Sprite(GRASS)
+    this.grass = new Sprite(['/img/grass.png'])
     this.grass.load()
     await this.planes[0].load()
     this.shadow = this.planes[0].shadowed(0.7)
     this.shadow.load()
-    this.spark = new Sprite(SPARK)
+    this.spark = new Sprite(['/img/spark.png'])
     this.spark.load()
+    this.fire = new Sprite(['/img/fire-0.png', '/img/fire-1.png', '/img/fire-2.png'], 4)
+    this.fire.load()
   }
   resize() {
     this.canvas.width = window.innerWidth
@@ -92,7 +93,18 @@ export default class View {
     // render entities
     entities.forEach(e => {
       if (e.t === 1) {
-        if (e.h <= 0) return
+        if (e.h <= 0) {
+          if (e.h < -1) return
+          const fire = this.fire.frame(this.frame)
+          if (!fire) return
+          ctx.save()
+          ctx.translate(e.x, e.y)
+          ctx.rotate(e.a)
+          ctx.globalAlpha = 1 + e.h
+          ctx.drawImage(fire, fire.width * -0.5, fire.height * -0.4)
+          ctx.restore()
+          return
+        }
 
         const pi = e.id % this.planes.length
         const plane = this.planes[pi].frame(this.frame)
