@@ -141,6 +141,14 @@ export default class View {
     ctx.fillStyle = '#fff'
     ctx.font = '14px sans-serif'
     ctx.fillText(`host: ${this.histT}  client: ${this.predT}  predict ahead: ${predict}  behind latest: ${behind}`, 20, 20)
+
+    // pilot name
+    if (player) {
+      ctx.fillStile = '#fff'
+      ctx.font = '24px serif'
+      ctx.textAlign = 'center'
+      ctx.fillText(player.name, w * 0.5, 32)
+    }
   }
   bounds() {
     const w = this.canvas.width

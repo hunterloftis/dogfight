@@ -15,6 +15,7 @@ export default class Client {
     this.keys = new Keyboard()
     this.view = new View(canvas)
     this.id = undefined
+    this.name = ''
     this.entities = {}
     this.history = []
     this.inputs = []
@@ -58,6 +59,7 @@ export default class Client {
     this.sock.receive().forEach(msg => {
       if (msg.type === 'hello') {
         this.id = msg.id
+        this.name = msg.name
         return
       }
       if (msg.type === 'state') { // state: { time, entities, sequence }

@@ -1,6 +1,7 @@
 import Ship from './public/src/ship.mjs'
 import WebSocket from 'ws'
 import { performance } from 'perf_hooks'
+import words from './words.json'
 
 const TICK = 16
 const UPDATE_INTERVAL = 100
@@ -14,8 +15,9 @@ export default class Host {
 
     this.wss.on('connection', socket => {
       const id = this.nextId++
-      const entity = new Ship({ id })
-      const msg = JSON.stringify({ type: 'hello', id })
+      const name = pilotName()
+      const entity = new Ship({ id, name })
+      const msg = JSON.stringify({ type: 'hello', id, name })
 
       this.entities[id] = entity
       socket.id = id
@@ -99,4 +101,13 @@ export default class Host {
       socket.send(msg)
     })
   }
+}
+
+function pilotName() {
+  const fi = Math.floor(Math.random() * words.adjectives.length)
+  const first = words.adjectives[fi][0].toUpperCase() + words.adjectives[fi].slice(1)
+  const nouns = words.nouns.filter(n => n[0].toLowerCase() === first[0].toLowerCase())
+  const li = Math.floor(Math.random() * nouns.length)
+  const last = nouns[li][0].toUpperCase() + nouns[li].slice(1)
+  return `Capt. ${first} ${last}`
 }
