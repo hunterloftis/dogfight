@@ -65,7 +65,6 @@ export default class Host {
           } else {  // unignorable input
             const ch = en.simulate(TICK, input) || []
             children.push(...ch)
-            socket.appliedNulls = 0
           }
           socket.applied = input.n
         } else {
