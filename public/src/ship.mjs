@@ -4,9 +4,9 @@ import Missile from './missile.mjs'
 const TURN_SPEED = 1
 const SPEED = 150
 const TELEPORT_LIMIT = 100
-const BULLET_DAMAGE = 0.007
+const BULLET_DAMAGE = 0.005
 const BULLET_DISTANCE = 1000
-const TARGETING_ANGLE = Math.PI / 32
+const TARGET_SIZE = 256
 
 export default class Ship extends Entity {
   constructor(state) {
@@ -53,9 +53,15 @@ export default class Ship extends Entity {
     const dx = Math.cos(angle)
     const dy = Math.sin(angle)
 
-    const speed = secs * SPEED
-    this.x += dx * speed
-    this.y += dy * speed
+    if (this.h > 0) {
+      const speed = secs * SPEED
+      this.x += dx * speed
+      this.y += dy * speed
+    } else if (this.h > -4) {
+      const speed = secs * SPEED * (4 + this.h) / 4
+      this.x += dx * speed
+      this.y += dy * speed
+    }
 
     if (this.x <= -1000) this.x += 2000
     else if (this.x >= 1000) this.x -= 2000
@@ -68,17 +74,24 @@ export default class Ship extends Entity {
     if (!this.f) return
     if (other.t !== 1) return
     if (other.h <= 0) return
+    if (other === this) return
 
     const dx = other.x - this.x
     const dy = other.y - this.y
     const dist = Math.sqrt(dx * dx + dy * dy)
     if (dist > BULLET_DISTANCE) return
 
-    const angleToEnemy = Math.atan2(dy, dx)
-    const angleFacing = this.a - Math.PI / 2
+    const hitAngle = Math.atan(TARGET_SIZE / (2 * dist))
+    const angleToEnemy = boundAngle(Math.atan2(dy, dx))
+    const angleFacing = boundAngle(this.a - Math.PI / 2)
     const targetAngle = Math.abs(angleFacing - angleToEnemy)
-    if (targetAngle > TARGETING_ANGLE) return
+    if (targetAngle > hitAngle) return
 
     other.h = Math.max(other.h - BULLET_DAMAGE, 0)
   }
+}
+
+function boundAngle(a) {
+  while (a < 0) a += Math.PI * 2
+  return a % (Math.PI * 2)
 }

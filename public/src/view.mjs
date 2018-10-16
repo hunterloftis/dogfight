@@ -3,6 +3,7 @@ import Sprite from './sprite.mjs'
 const SHADOW_DISTANCE = 100
 const BULLET_SPEED = 50
 const BULLET_LIFE = 30
+const PUFF_LIFE = 60
 
 export default class View {
   constructor(canvas) {
@@ -14,6 +15,7 @@ export default class View {
     this.ctx = canvas.getContext('2d')
     this.frame = 0
     this.bullets = new Set()
+    this.puffs = new Set()
     this.hitMask = document.createElement('canvas')
     this.hitMask.width = 2000
     this.hitMask.height = 2000
@@ -38,6 +40,8 @@ export default class View {
     this.spark.load()
     this.fire = new Sprite(['/img/fire-0.png', '/img/fire-1.png', '/img/fire-2.png'], 4)
     this.fire.load()
+    this.puff = new Sprite(['/img/puff-0.png', '/img/puff-1.png', '/img/puff-2.png', '/img/smoke-0.png', '/img/smoke-1.png', '/img/smoke-2.png'], 1)
+    this.puff.load()
   }
   resize() {
     this.canvas.width = window.innerWidth
@@ -67,9 +71,11 @@ export default class View {
 
     // render tiles
     const tile = this.grass.frame(0)
-    for (let y = -1000; y < 1000; y += tile.height) {
-      for (let x = -1000; x < 1000; x += tile.width) {
-        ctx.drawImage(tile, x, y)
+    if (tile) {
+      for (let y = -1000; y < 1000; y += tile.height) {
+        for (let x = -1000; x < 1000; x += tile.width) {
+          ctx.drawImage(tile, x, y)
+        }
       }
     }
 
@@ -88,6 +94,23 @@ export default class View {
         ctx.drawImage(shadow, shadow.width * -0.5, shadow.height * -0.4)
         ctx.restore()
       }
+    })
+
+    // render puffs
+    this.puffs.forEach(p => {
+      p.life -= 1
+      if (p.life <= 0) {
+        this.puffs.delete(p)
+        return
+      }
+
+      const puff = this.puff.frame(p.i)
+      if (!puff) return
+
+      ctx.save()
+      ctx.globalAlpha = p.life / PUFF_LIFE * 0.5
+      ctx.drawImage(puff, p.x - puff.width * 0.5, p.y - puff.height * 0.5)
+      ctx.restore()
     })
 
     // render entities
@@ -109,6 +132,35 @@ export default class View {
         const pi = e.id % this.planes.length
         const plane = this.planes[pi].frame(this.frame)
         if (!plane) return
+
+        if (e.h < 0.7) {
+          if (this.frame % 8 === 0) {
+            const angle = e.a - Math.PI / 2
+            this.puffs.add({
+              x: e.x + Math.cos(angle - Math.PI / 2) * plane.width * 0.25,
+              y: e.y + Math.sin(angle - Math.PI / 2) * plane.width * 0.25,
+              life: PUFF_LIFE,
+              i: Math.floor(Math.random() * 3),
+            })
+          } else if ((this.frame + 4) % 8 === 0) {
+            const angle = e.a - Math.PI / 2
+            this.puffs.add({
+              x: e.x + Math.cos(angle + Math.PI / 2) * plane.width * 0.25,
+              y: e.y + Math.sin(angle + Math.PI / 2) * plane.width * 0.25,
+              life: PUFF_LIFE,
+              i: Math.floor(Math.random() * 3),
+            })
+          }
+          if (e.h < 0.3 && this.frame % 2 === 0) {
+            const angle = e.a + Math.PI / 2
+            this.puffs.add({
+              x: e.x + Math.cos(angle) * plane.height * 0.4,
+              y: e.y + Math.sin(angle) * plane.height * 0.4,
+              life: PUFF_LIFE,
+              i: Math.floor(3 + Math.random() * 3),
+            })
+          }
+        }
 
         if (e.f && this.frame % 3 === 0) {
           const angle = e.a - Math.PI / 2 + (Math.random() * 0.2 - 0.1)

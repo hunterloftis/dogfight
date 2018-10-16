@@ -27,6 +27,9 @@ export default class Sprite {
     const i = Math.floor(n / this.duration) % this.images.length
     return this.images[i]
   }
+  frames() {
+    return this.images.length
+  }
   shadowed(scale = 1) {
     const srcList = this.images.map(img => shadow(img, scale))
     return new Sprite(srcList, this.duration)
