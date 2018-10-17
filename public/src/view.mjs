@@ -2,7 +2,7 @@ import Sprite from './sprite.mjs'
 
 const SHADOW_DISTANCE = 100
 const BULLET_SPEED = 50
-const BULLET_LIFE = 30
+const BULLET_LIFE = 20
 const PUFF_LIFE = 60
 
 export default class View {
