@@ -27,7 +27,7 @@ export default class Client {
       authority: true,
       prediction: true,
       interpolation: true,
-      viewModel: true,
+      viewState: true,
     }
     document.addEventListener('keypress', this.onKey.bind(this))
     requestAnimationFrame(this.update)
@@ -36,7 +36,7 @@ export default class Client {
     if (e.keyCode === 49) this.debug.authority = !this.debug.authority
     if (e.keyCode === 50) this.debug.prediction = !this.debug.prediction
     if (e.keyCode === 51) this.debug.interpolation = !this.debug.interpolation
-    if (e.keyCode === 52) this.debug.viewModel = !this.debug.viewModel
+    if (e.keyCode === 52) this.debug.viewState = !this.debug.viewState
   }
   update() {
     const now = performance.now()

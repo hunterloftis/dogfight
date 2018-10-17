@@ -83,7 +83,7 @@ export default class View {
     this.frame++
 
     // draw planes
-    this.renderPlanes(planes, this.planeLayer.el, this.planeLayer.ctx, debug.viewModel)
+    this.renderPlanes(planes, this.planeLayer.el, this.planeLayer.ctx, debug.viewState)
 
     // clear canvas (should be unnecessary eventually)
     ctx.clearRect(0, 0, w, h)
@@ -106,7 +106,7 @@ export default class View {
     this.renderBoundary(ctx)
 
     // draw shadows & smoke
-    if (debug.viewModel) {
+    if (debug.viewState) {
       this.renderShadows(planes, ctx)
       this.renderPuffs(ctx)
     } else {
@@ -117,7 +117,7 @@ export default class View {
     ctx.drawImage(this.planeLayer.el, -this.planeLayer.el.width * 0.5, -this.planeLayer.el.height * 0.5)
 
     // draw bullets
-    if (debug.viewModel) {
+    if (debug.viewState) {
       this.renderBullets(ctx, this.planeLayer.el, this.planeLayer.ctx)
     } else {
       this.bullets.clear()
@@ -132,7 +132,7 @@ export default class View {
     // draw pilot name
     this.renderPlayer(player, ctx, w)
   }
-  renderPlanes(planes, canvas, ctx, viewModel) {
+  renderPlanes(planes, canvas, ctx, viewState) {
     ctx.clearRect(0, 0, canvas.width, canvas.height)
     ctx.save()
     ctx.translate(canvas.width * 0.5, canvas.height * 0.5)
@@ -141,7 +141,7 @@ export default class View {
       // dead planes
       if (plane.h <= 0) {
         if (plane.h < -1) return
-        if (!viewModel) return
+        if (!viewState) return
 
         const fireIm = this.fireSprite.frame(this.frame)
         if (!fireIm) return
@@ -306,7 +306,7 @@ export default class View {
       `1. Authority: ${debug.authority ? '✅' : '❌'}`,
       `2. Prediction: ${debug.prediction ? '✅' : '❌'}`,
       `3. Interpolation: ${debug.interpolation ? '✅' : '❌'}`,
-      `4. View-Model: ${debug.viewModel ? '✅' : '❌'}`,
+      `4. View-Model: ${debug.viewState ? '✅' : '❌'}`,
     ]
     stats.forEach((str, i) => {
       ctx.fillText(str, w - 32, 64 + i * 32)
