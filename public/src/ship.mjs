@@ -10,6 +10,7 @@ const BULLET_FAR = 1000
 const TARGET_SIZE = 256
 const FASTER = 1.3
 const SLOWER = 0.7
+const MAP_HALF_SIZE = 1024
 
 export default class Ship extends Entity {
   constructor(state) {
@@ -69,10 +70,10 @@ export default class Ship extends Entity {
       this.y += dy * speed
     }
 
-    if (this.x <= -1000) this.x += 2000
-    else if (this.x >= 1000) this.x -= 2000
-    if (this.y <= -1000) this.y += 2000
-    else if (this.y >= 1000) this.y -= 2000
+    if (this.x <= -MAP_HALF_SIZE) this.x += MAP_HALF_SIZE * 2
+    else if (this.x >= MAP_HALF_SIZE) this.x -= MAP_HALF_SIZE * 2
+    if (this.y <= -MAP_HALF_SIZE) this.y += MAP_HALF_SIZE * 2
+    else if (this.y >= MAP_HALF_SIZE) this.y -= MAP_HALF_SIZE * 2
 
     this.f = inputs.F
   }

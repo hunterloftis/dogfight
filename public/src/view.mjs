@@ -29,7 +29,7 @@ export default class View {
     this.puffs = new Set()
 
     this.bgLayer = newCanvas(WIDTH, HEIGHT)
-    this.planeLayer = newCanvas(WIDTH, HEIGHT)
+    this.planeLayer = newCanvas(WIDTH + 512, HEIGHT + 512)
 
     this.load()
     this.drawBg()
@@ -97,7 +97,10 @@ export default class View {
     }
 
     // copy background layer
-    this.ctx.drawImage(this.bgLayer.el, -this.bgLayer.el.width * 0.5, -this.bgLayer.el.height * 0.5)
+    this.ctx.drawImage(this.bgLayer.el, -this.bgLayer.el.width, -this.bgLayer.el.height)  // upper-left
+    this.ctx.drawImage(this.bgLayer.el, 0, -this.bgLayer.el.height) // upper-right
+    this.ctx.drawImage(this.bgLayer.el, -this.bgLayer.el.width, 0)  // lower-left
+    this.ctx.drawImage(this.bgLayer.el, 0, 0) // lower-right
 
     // draw shadows
     this.renderShadows(planes, ctx)
