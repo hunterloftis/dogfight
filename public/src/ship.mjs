@@ -4,8 +4,9 @@ import Missile from './missile.mjs'
 const TURN_SPEED = 1
 const SPEED = 150
 const TELEPORT_LIMIT = 100
-const BULLET_DAMAGE = 0.005
-const BULLET_DISTANCE = 1000
+const BULLET_DAMAGE = 0.01
+const BULLET_NEAR = 300
+const BULLET_FAR = 1000
 const TARGET_SIZE = 256
 
 export default class Ship extends Entity {
@@ -79,7 +80,7 @@ export default class Ship extends Entity {
     const dx = other.x - this.x
     const dy = other.y - this.y
     const dist = Math.sqrt(dx * dx + dy * dy)
-    if (dist > BULLET_DISTANCE) return
+    if (dist > BULLET_FAR) return
 
     const hitAngle = Math.atan(TARGET_SIZE / (2 * dist))
     const angleToEnemy = boundAngle(Math.atan2(dy, dx))
@@ -87,7 +88,9 @@ export default class Ship extends Entity {
     const targetAngle = Math.abs(angleFacing - angleToEnemy)
     if (targetAngle > hitAngle) return
 
-    other.h = Math.max(other.h - BULLET_DAMAGE, 0)
+    const falloff = 1 - (dist - BULLET_NEAR) / (BULLET_FAR - BULLET_NEAR)
+    const damage = BULLET_DAMAGE * Math.min(falloff, 1)
+    other.h = Math.max(other.h - damage, 0)
   }
 }
 
