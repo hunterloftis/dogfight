@@ -1,6 +1,6 @@
 import Sprite from './sprite.mjs'
 
-const SHADOW_DISTANCE = 100
+const SHADOW_DISTANCE = 128
 const BULLET_SPEED = 50
 const BULLET_LIFE = 20
 const PUFF_LIFE = 60
@@ -31,23 +31,10 @@ export default class View {
     this.bgLayer = newCanvas(WIDTH, HEIGHT)
     this.planeLayer = newCanvas(WIDTH, HEIGHT)
 
+    this.load()
     this.drawBg()
     this.resize()
-    this.load()
     window.addEventListener('resize', e => this.resize())
-  }
-  async drawBg() {
-    const ctx = this.bgLayer.ctx
-    ctx.fillStyle = '#000'
-    ctx.fillRect(0, 0, WIDTH, HEIGHT)
-    const grassSprite = new Sprite(['/img/grass.png'])
-    await grassSprite.load()
-    const tile = grassSprite.frame(0)
-    for (let y = 0; y < HEIGHT; y += tile.height) {
-      for (let x = 0; x < WIDTH; x += tile.width) {
-        ctx.drawImage(tile, x, y)
-      }
-    }
   }
   async load() {
     this.planeSprites = [
@@ -65,6 +52,22 @@ export default class View {
     this.fireSprite.load()
     this.puffSprite = new Sprite(['/img/puff-0.png', '/img/puff-1.png', '/img/puff-2.png', '/img/smoke-0.png', '/img/smoke-1.png', '/img/smoke-2.png'], 1)
     this.puffSprite.load()
+  }
+  async drawBg() {
+    const ctx = this.bgLayer.ctx
+    ctx.fillStyle = '#000'
+    ctx.fillRect(0, 0, WIDTH, HEIGHT)
+    const grassSprite = new Sprite(['/img/grass-0.png', '/img/grass-1.png', '/img/grass-2.png', '/img/grass-3.png'], 1)
+    await grassSprite.load()
+    let w = grassSprite.frame(0).width
+    let h = grassSprite.frame(0).height
+    for (let y = 0; y < HEIGHT; y += h) {
+      for (let x = 0; x < WIDTH; x += w) {
+        const i = Math.floor(Math.random() * grassSprite.frames() + 1) % grassSprite.frames()
+        const tile = grassSprite.frame(i)
+        ctx.drawImage(tile, x, y)
+      }
+    }
   }
   resize() {
     this.canvas.width = window.innerWidth
