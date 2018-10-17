@@ -4,7 +4,7 @@ import Missile from './missile.mjs'
 const TURN_SPEED = 1
 const SPEED = 150
 const TELEPORT_LIMIT = 100
-const BULLET_DAMAGE = 0.01
+const BULLET_DAMAGE = 0.008
 const BULLET_NEAR = 300
 const BULLET_FAR = 1000
 const TARGET_SIZE = 256
