@@ -4,6 +4,16 @@ const SHADOW_DISTANCE = 100
 const BULLET_SPEED = 50
 const BULLET_LIFE = 20
 const PUFF_LIFE = 60
+const WIDTH = 2048
+const HEIGHT = 2048
+
+function newCanvas(width, height) {
+  const el = document.createElement('canvas')
+  const ctx = el.getContext('2d')
+  el.width = width
+  el.height = height
+  return { el, ctx }
+}
 
 export default class View {
   constructor(canvas) {
@@ -13,35 +23,48 @@ export default class View {
     this.canvas.style.left = 0
     this.canvas.style.top = 0
     this.ctx = canvas.getContext('2d')
+
     this.frame = 0
     this.bullets = new Set()
     this.puffs = new Set()
-    this.hitMask = document.createElement('canvas')
-    this.hitMask.width = 2000
-    this.hitMask.height = 2000
-    this.hitCtx = this.hitMask.getContext('2d')
+
+    this.bgLayer = newCanvas(WIDTH, HEIGHT)
+    this.planeLayer = newCanvas(WIDTH, HEIGHT)
+
+    this.drawBg()
     this.resize()
     this.load()
     window.addEventListener('resize', e => this.resize())
   }
+  async drawBg() {
+    const ctx = this.bgLayer.ctx
+    ctx.fillStyle = '#000'
+    ctx.fillRect(0, 0, WIDTH, HEIGHT)
+    const grassSprite = new Sprite(['/img/grass.png'])
+    await grassSprite.load()
+    const tile = grassSprite.frame(0)
+    for (let y = 0; y < HEIGHT; y += tile.height) {
+      for (let x = 0; x < WIDTH; x += tile.width) {
+        ctx.drawImage(tile, x, y)
+      }
+    }
+  }
   async load() {
-    this.planes = [
+    this.planeSprites = [
       new Sprite(['/img/plane1-0.png', '/img/plane1-1.png', '/img/plane1-2.png'], 4),
       new Sprite(['/img/plane2-0.png', '/img/plane2-1.png', '/img/plane2-2.png'], 4),
       new Sprite(['/img/plane3-0.png', '/img/plane3-1.png', '/img/plane3-2.png'], 4),
     ]
-    this.planes.forEach(p => p.load())
-    this.grass = new Sprite(['/img/grass.png'])
-    this.grass.load()
-    await this.planes[0].load()
-    this.shadow = this.planes[0].shadowed(0.7)
-    this.shadow.load()
-    this.spark = new Sprite(['/img/spark.png'])
-    this.spark.load()
-    this.fire = new Sprite(['/img/fire-0.png', '/img/fire-1.png', '/img/fire-2.png'], 4)
-    this.fire.load()
-    this.puff = new Sprite(['/img/puff-0.png', '/img/puff-1.png', '/img/puff-2.png', '/img/smoke-0.png', '/img/smoke-1.png', '/img/smoke-2.png'], 1)
-    this.puff.load()
+    this.planeSprites.forEach(p => p.load())
+    await this.planeSprites[0].load()
+    this.shadowSprite = this.planeSprites[0].shadowed(0.7)
+    this.shadowSprite.load()
+    this.sparkSprite = new Sprite(['/img/spark.png'])
+    this.sparkSprite.load()
+    this.fireSprite = new Sprite(['/img/fire-0.png', '/img/fire-1.png', '/img/fire-2.png'], 4)
+    this.fireSprite.load()
+    this.puffSprite = new Sprite(['/img/puff-0.png', '/img/puff-1.png', '/img/puff-2.png', '/img/smoke-0.png', '/img/smoke-1.png', '/img/smoke-2.png'], 1)
+    this.puffSprite.load()
   }
   resize() {
     this.canvas.width = window.innerWidth
@@ -49,54 +72,141 @@ export default class View {
   }
   render(entities, id, historyTime, predictTime, latestTime) {
     const ctx = this.ctx
-    const hit = this.hitCtx
     const w = this.canvas.width
     const h = this.canvas.height
 
+    const planes = entities.filter(en => en.t === 1)
+    const player = planes.find(en => en.id === id)
     this.frame++
 
-    ctx.clearRect(0, 0, w, h) // TODO: should be unnecessary
+    // draw planes
+    this.renderPlanes(planes, this.planeLayer.el, this.planeLayer.ctx)
+
+    // clear canvas (should be unnecessary eventually)
+    ctx.clearRect(0, 0, w, h)
     ctx.save()
 
-    hit.clearRect(0, 0, this.hitMask.width, this.hitMask.height)
-
-    const player = entities.find(en => en.id === id)
-
+    // transform to player orientation
     ctx.translate(w * 0.5, h * 0.6)
-
     if (player) {
       ctx.rotate(-player.a)
       ctx.translate(-player.x, -player.y)
     }
 
-    // render tiles
-    const tile = this.grass.frame(0)
-    if (tile) {
-      for (let y = -1000; y < 1000; y += tile.height) {
-        for (let x = -1000; x < 1000; x += tile.width) {
-          ctx.drawImage(tile, x, y)
-        }
-      }
-    }
+    // copy background layer
+    this.ctx.drawImage(this.bgLayer.el, 0, 0)
 
-    // render shadows
-    entities.forEach(e => {
-      if (e.t === 1) {
-        if (e.h <= 0) return
+    // draw shadows
+    this.renderShadows(planes, ctx)
 
-        const shadow = this.shadow.frame(this.frame)
-        if (!shadow) return
+    // draw smoke
+    this.renderPuffs(ctx)
+
+    // copy plane layer
+    ctx.drawImage(this.planeLayer.el, 0, 0)
+
+    // draw bullets
+    this.renderBullets(ctx, this.planeLayer.ctx)
+
+    // transform back from player orientation
+    ctx.restore()
+
+    // draw debug info
+    this.renderDebug(ctx, w, h, historyTime, predictTime, latestTime)
+
+    // draw pilot name
+    this.renderPlayer(player, ctx, w)
+  }
+  renderPlanes(planes, canvas, ctx) {
+    ctx.clearRect(0, 0, canvas.width, canvas.height)
+    planes.forEach(plane => {
+      // dead planes
+      if (plane.h <= 0) {
+        if (plane.h < -1) return
+
+        const fireIm = this.fire.frame(this.frame)
+        if (!fireIm) return
 
         ctx.save()
-        ctx.translate(e.x, e.y + SHADOW_DISTANCE)
-        ctx.rotate(e.a)
-        ctx.globalAlpha = 0.33
-        ctx.drawImage(shadow, shadow.width * -0.5, shadow.height * -0.4)
+        ctx.translate(plane.x, plane.y)
+        ctx.rotate(plane.a)
+        ctx.globalAlpha = 1 + plane.h
+        ctx.drawImage(fireIm, fireIm.width * -0.5, fireIm.height * -0.4)
         ctx.restore()
+        return
       }
-    })
 
-    // render puffs
+      // plane image
+      const pi = plane.id % this.planeSprites.length
+      const planeIm = this.planeSprites[pi].frame(this.frame)
+      if (!planeIm) return
+
+      // add puffs of smoke
+      if (plane.h < 0.7) {
+        if (this.frame % 8 === 0) {
+          const angle = plane.a - Math.PI / 2
+          this.puffs.add({
+            x: plane.x + Math.cos(angle - Math.PI / 2) * planeIm.width * 0.25,
+            y: plane.y + Math.sin(angle - Math.PI / 2) * planeIm.width * 0.25,
+            life: PUFF_LIFE,
+            i: Math.floor(Math.random() * 3),
+          })
+        } else if ((this.frame + 4) % 8 === 0) {
+          const angle = plane.a - Math.PI / 2
+          this.puffs.add({
+            x: plane.x + Math.cos(angle + Math.PI / 2) * planeIm.width * 0.25,
+            y: plane.y + Math.sin(angle + Math.PI / 2) * planeIm.width * 0.25,
+            life: PUFF_LIFE,
+            i: Math.floor(Math.random() * 3),
+          })
+        }
+        if (plane.h < 0.3 && this.frame % 2 === 0) {
+          const angle = plane.a + Math.PI / 2
+          this.puffs.add({
+            x: plane.x + Math.cos(angle) * planeIm.height * 0.4,
+            y: plane.y + Math.sin(angle) * planeIm.height * 0.4,
+            life: PUFF_LIFE,
+            i: Math.floor(3 + Math.random() * 3),
+          })
+        }
+      }
+
+      // add bullets
+      if (plane.f && this.frame % 3 === 0) {
+        const angle = plane.a - Math.PI / 2 + (Math.random() * 0.2 - 0.1)
+        this.bullets.add({
+          x: plane.x + Math.cos(angle) * planeIm.height * 0.25,
+          y: plane.y + Math.sin(angle) * planeIm.height * 0.25,
+          vx: Math.cos(angle) * (BULLET_SPEED + Math.random() * 25),
+          vy: Math.sin(angle) * (BULLET_SPEED + Math.random() * 25),
+          life: BULLET_LIFE,
+        })
+      }
+
+      // draw plane
+      ctx.save()
+      ctx.translate(plane.x, plane.y)
+      ctx.rotate(plane.a)
+      ctx.drawImage(planeIm, planeIm.width * -0.5, planeIm.height * -0.4)
+      ctx.restore()
+    })
+  }
+  renderShadows(planes, ctx) {
+    planes.forEach(p => {
+      if (p.h <= 0) return
+
+      const shadowIm = this.shadowSprite.frame(this.frame)
+      if (!shadowIm) return
+
+      ctx.save()
+      ctx.translate(p.x, p.y + SHADOW_DISTANCE)
+      ctx.rotate(p.a)
+      ctx.globalAlpha = 0.33
+      ctx.drawImage(shadowIm, shadowIm.width * -0.5, shadowIm.height * -0.4)
+      ctx.restore()
+    })
+  }
+  renderPuffs(ctx) {
     this.puffs.forEach(p => {
       p.life -= 1
       if (p.life <= 0) {
@@ -104,96 +214,17 @@ export default class View {
         return
       }
 
-      const puff = this.puff.frame(p.i)
-      if (!puff) return
+      const puffIm = this.puffSprite.frame(p.i)
+      if (!puffIm) return
 
       ctx.save()
       ctx.globalAlpha = p.life / PUFF_LIFE * 0.5
-      ctx.drawImage(puff, p.x - puff.width * 0.5, p.y - puff.height * 0.5)
+      ctx.drawImage(puffIm, p.x - puffIm.width * 0.5, p.y - puffIm.height * 0.5)
       ctx.restore()
     })
-
-    // render entities
-    entities.forEach(e => {
-      if (e.t === 1) {
-        if (e.h <= 0) {
-          if (e.h < -1) return
-          const fire = this.fire.frame(this.frame)
-          if (!fire) return
-          ctx.save()
-          ctx.translate(e.x, e.y)
-          ctx.rotate(e.a)
-          ctx.globalAlpha = 1 + e.h
-          ctx.drawImage(fire, fire.width * -0.5, fire.height * -0.4)
-          ctx.restore()
-          return
-        }
-
-        const pi = e.id % this.planes.length
-        const plane = this.planes[pi].frame(this.frame)
-        if (!plane) return
-
-        if (e.h < 0.7) {
-          if (this.frame % 8 === 0) {
-            const angle = e.a - Math.PI / 2
-            this.puffs.add({
-              x: e.x + Math.cos(angle - Math.PI / 2) * plane.width * 0.25,
-              y: e.y + Math.sin(angle - Math.PI / 2) * plane.width * 0.25,
-              life: PUFF_LIFE,
-              i: Math.floor(Math.random() * 3),
-            })
-          } else if ((this.frame + 4) % 8 === 0) {
-            const angle = e.a - Math.PI / 2
-            this.puffs.add({
-              x: e.x + Math.cos(angle + Math.PI / 2) * plane.width * 0.25,
-              y: e.y + Math.sin(angle + Math.PI / 2) * plane.width * 0.25,
-              life: PUFF_LIFE,
-              i: Math.floor(Math.random() * 3),
-            })
-          }
-          if (e.h < 0.3 && this.frame % 2 === 0) {
-            const angle = e.a + Math.PI / 2
-            this.puffs.add({
-              x: e.x + Math.cos(angle) * plane.height * 0.4,
-              y: e.y + Math.sin(angle) * plane.height * 0.4,
-              life: PUFF_LIFE,
-              i: Math.floor(3 + Math.random() * 3),
-            })
-          }
-        }
-
-        if (e.f && this.frame % 3 === 0) {
-          const angle = e.a - Math.PI / 2 + (Math.random() * 0.2 - 0.1)
-          this.bullets.add({
-            x: e.x + Math.cos(angle) * plane.height * 0.25,
-            y: e.y + Math.sin(angle) * plane.height * 0.25,
-            vx: Math.cos(angle) * (BULLET_SPEED + Math.random() * 25),
-            vy: Math.sin(angle) * (BULLET_SPEED + Math.random() * 25),
-            life: BULLET_LIFE,
-          })
-        }
-        ctx.save()
-        ctx.translate(e.x, e.y)
-        ctx.rotate(e.a)
-        ctx.drawImage(plane, plane.width * -0.5, plane.height * -0.4)
-        ctx.restore()
-
-        hit.save()
-        hit.translate(e.x + 1000, e.y + 1000)
-        hit.rotate(e.a)
-        hit.drawImage(plane, plane.width * -0.5, plane.height * -0.4)
-        hit.restore()
-      } else if (e.t === 2) {
-        ctx.save()
-        ctx.translate(e.x, e.y)
-        ctx.fillStyle = '#00ffff'
-        ctx.fillRect(-8, -8, 16, 16)
-        ctx.restore()
-      }
-    })
-
-    // render bullets
-    const spark = this.spark.frame(0)
+  }
+  renderBullets(ctx, hitCtx) {
+    const sparkIm = this.sparkSprite.frame(0)
     ctx.fillStyle = '#fff'
     ctx.strokeStyle = '#ffff99'
     ctx.lineCap = 'round'
@@ -214,29 +245,14 @@ export default class View {
       ctx.closePath()
       ctx.stroke()
 
-      if (spark) {
-        const pix = hit.getImageData(b.x + 1000, b.y + 1000, 1, 1).data
+      if (sparkIm) {
+        const pix = hitCtx.getImageData(b.x, b.y, 1, 1).data
         if (pix[3] > 0) {
-          ctx.drawImage(spark, b.x - spark.width * 0.5, b.y - spark.height * 0.5)
+          ctx.drawImage(sparkIm, b.x - sparkIm.width * 0.5, b.y - sparkIm.height * 0.5)
           this.bullets.delete(b)
         }
       }
     })
-
-    ctx.restore()
-
-    this.renderDebug(ctx, w, h, historyTime, predictTime, latestTime)
-
-    // pilot name
-    if (player) {
-      ctx.fillStyle = '#fff'
-      ctx.strokeStyle = '#000'
-      ctx.lineWidth = 4
-      ctx.font = '24px serif'
-      ctx.textAlign = 'center'
-      ctx.strokeText(player.name, w * 0.5, 33)
-      ctx.fillText(player.name, w * 0.5, 32)
-    }
   }
   renderDebug(ctx, w, h, historyTime, predictTime, latestTime) {
     ctx.save()
@@ -255,6 +271,16 @@ export default class View {
       ctx.fillText(str, w - 32, 64 + i * 32)
     })
     ctx.restore()
+  }
+  renderPlayer(player, ctx, w) {
+    if (!player) return
+    ctx.fillStyle = '#fff'
+    ctx.strokeStyle = '#000'
+    ctx.lineWidth = 4
+    ctx.font = '24px serif'
+    ctx.textAlign = 'center'
+    ctx.strokeText(player.name, w * 0.5, 33)
+    ctx.fillText(player.name, w * 0.5, 32)
   }
   bounds() {
     const w = this.canvas.width
