@@ -15,11 +15,8 @@ export default class Host {
 
     this.wss.on('connection', socket => {
       const id = this.nextId++
-      const name = pilotName()
-      const entity = new Ship({ id, name })
-      const msg = JSON.stringify({ type: 'hello', id, name })
+      const msg = JSON.stringify({ type: 'hello', id })
 
-      this.entities[id] = entity
       socket.id = id
       socket.inputs = []
       socket.applied = 0
@@ -31,7 +28,7 @@ export default class Host {
         // For demo purposes only.
         // The whole point of an authoritative server is so clients can only send input, not state.
         if (input.type === 'hacked-state') {
-          entity.name = input.name
+          this.entities[id].name = input.name
         } else {
           socket.inputs.push(input)
         }
@@ -56,6 +53,18 @@ export default class Host {
     this.time += ticks * TICK
 
     if (!sockets.length) return
+
+    const events = []
+
+    this.wss.clients.forEach(socket => {
+      if (socket.name) return
+
+      const name = pilotName()
+      const entity = new Ship({ id: socket.id, name })
+      this.entities[socket.id] = entity
+      socket.name = name
+      events.push({ msg: `Capt. ${name} joined.` })
+    })
 
     // TODO: make clearer that every tick, we apply some kind of input
     // it's either explicit (in the queue) or implied (implied null)
@@ -82,7 +91,10 @@ export default class Host {
         }
       })
       entities.forEach(en1 => {
-        entities.forEach(en2 => en1.interact(TICK, en2))
+        entities.forEach(en2 => {
+          const ev = en1.interact(TICK, en2) || []
+          events.push(...ev)
+        })
       })
       children.forEach(child => {
         if (child.id && this.entities[child.id]) {
@@ -101,6 +113,7 @@ export default class Host {
         time: this.time,
         entities: this.entities,
         sequence: socket.applied,
+        events: events,
       }
       const msg = JSON.stringify({ type: 'state', state })
       socket.send(msg)
@@ -114,5 +127,5 @@ function pilotName() {
   const nouns = words.nouns.filter(n => n[0].toLowerCase() === first[0].toLowerCase())
   const li = Math.floor(Math.random() * nouns.length)
   const last = nouns[li][0].toUpperCase() + nouns[li].slice(1)
-  return `Capt. ${first} ${last}`
+  return `${first} ${last}`
 }

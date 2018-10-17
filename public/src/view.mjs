@@ -73,7 +73,7 @@ export default class View {
     this.canvas.width = window.innerWidth
     this.canvas.height = window.innerHeight
   }
-  render(entities, id, time, debug) {
+  render(entities, id, time, events, debug) {
     const ctx = this.ctx
     const w = this.canvas.width
     const h = this.canvas.height
@@ -131,6 +131,9 @@ export default class View {
 
     // draw pilot name
     this.renderPlayer(player, ctx, w)
+
+    // draw events
+    this.renderEvents(events, ctx)
   }
   renderPlanes(planes, canvas, ctx, viewState) {
     ctx.clearRect(0, 0, canvas.width, canvas.height)
@@ -313,15 +316,26 @@ export default class View {
     })
     ctx.restore()
   }
+  renderEvents(events, ctx) {
+    ctx.save()
+    ctx.textAlign = 'left'
+    ctx.fillStyle = '#fff'
+    ctx.font = '18px sans-serif'
+    events.forEach((e, i) => {
+      ctx.fillText(e.msg, 32, 64 + i * 32)
+    })
+    ctx.restore()
+  }
   renderPlayer(player, ctx, w) {
     if (!player) return
+    const name = `Capt. ${player.name}`
     ctx.fillStyle = '#fff'
     ctx.strokeStyle = '#000'
     ctx.lineWidth = 4
     ctx.font = '24px serif'
     ctx.textAlign = 'center'
-    ctx.strokeText(player.name, w * 0.5, 33)
-    ctx.fillText(player.name, w * 0.5, 32)
+    ctx.strokeText(name, w * 0.5, 33)
+    ctx.fillText(name, w * 0.5, 32)
   }
   bounds() {
     const w = this.canvas.width

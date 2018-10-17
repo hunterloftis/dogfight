@@ -15,7 +15,6 @@ export default class Client {
     this.keys = new Keyboard()
     this.view = new View(canvas)
     this.id = undefined
-    this.name = ''
     this.entities = {}
     this.history = []
     this.inputs = []
@@ -23,6 +22,7 @@ export default class Client {
     this.inputTime = performance.now()
     this.frameTime = this.inputTime
     this.historyTime = 0
+    this.events = []
     this.debug = {
       authority: true,
       prediction: true,
@@ -77,11 +77,14 @@ export default class Client {
     this.sock.receive().forEach(msg => {
       if (msg.type === 'hello') {
         this.id = msg.id
-        this.name = msg.name
         return
       }
-      if (msg.type === 'state') { // state: { time, entities, sequence }
+      if (msg.type === 'state') { // state: { time, entities, sequence, events }
         this.history.push(msg.state)
+        if (msg.state.events) {
+          this.events.push(...msg.state.events)
+          this.events = this.events.slice(-10)
+        }
         return
       }
     })
@@ -156,7 +159,7 @@ export default class Client {
       predict: next.time + this.inputs.length * TICK,
       latest: next.time,
     }
-    this.view.render(entities, this.id, time, this.debug)
+    this.view.render(entities, this.id, time, this.events, this.debug)
   }
 }
 
