@@ -294,19 +294,19 @@ export default class View {
       this.predT = Math.round(time.predict)
       this.lateT = Math.round(time.latest)
     }
-    const predict = this.predT - this.histT
-    const behind = this.lateT - this.histT
+    const predict = debug.prediction ? this.predT - this.histT : 0
+    const behind = debug.interpolation ? this.lateT - this.histT : 0
     ctx.textAlign = 'right'
     ctx.fillStyle = '#fff'
     ctx.font = '18px sans-serif'
     const stats = [
-      `prediction (ahead): ${predict}`,
-      `interpolation (behind): ${behind}`,
-      '',
       `1. Authority: ${debug.authority ? '✅' : '❌'}`,
       `2. Prediction: ${debug.prediction ? '✅' : '❌'}`,
       `3. Interpolation: ${debug.interpolation ? '✅' : '❌'}`,
       `4. View-Model: ${debug.viewState ? '✅' : '❌'}`,
+      '',
+      `predicting: ${predict} ms`,
+      `${behind >= 0 ? 'interpolating' : 'extrapolating'}: ${Math.abs(behind)} ms`,
     ]
     stats.forEach((str, i) => {
       ctx.fillText(str, w - 32, 64 + i * 32)
