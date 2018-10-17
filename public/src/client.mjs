@@ -114,7 +114,11 @@ export default class Client {
         en.setState(next.entities[en.id])
         return
       }
-      en.interpolate(prev.entities[en.id], next.entities[en.id], tween)
+      if (this.debug.interpolation) {
+        en.interpolate(prev.entities[en.id], next.entities[en.id], tween)
+      } else {
+        en.setState(next.entities[en.id])
+      }
     })
   }
   predictLocal() {
