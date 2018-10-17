@@ -94,7 +94,7 @@ export default class View {
     }
 
     // copy background layer
-    this.ctx.drawImage(this.bgLayer.el, 0, 0)
+    this.ctx.drawImage(this.bgLayer.el, -this.bgLayer.el.width * 0.5, -this.bgLayer.el.height * 0.5)
 
     // draw shadows
     this.renderShadows(planes, ctx)
