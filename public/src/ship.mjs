@@ -8,6 +8,8 @@ const BULLET_DAMAGE = 0.008
 const BULLET_NEAR = 300
 const BULLET_FAR = 1000
 const TARGET_SIZE = 256
+const FASTER = 1.3
+const SLOWER = 0.7
 
 export default class Ship extends Entity {
   constructor(state) {
@@ -55,7 +57,10 @@ export default class Ship extends Entity {
     const dy = Math.sin(angle)
 
     if (this.h > 0) {
-      const speed = secs * SPEED
+      let accel = 1
+      if (inputs.U) accel *= FASTER
+      if (inputs.D) accel *= SLOWER
+      const speed = secs * SPEED * accel
       this.x += dx * speed
       this.y += dy * speed
     } else if (this.h > -4) {
