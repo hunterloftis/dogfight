@@ -102,6 +102,9 @@ export default class View {
     this.ctx.drawImage(this.bgLayer.el, -this.bgLayer.el.width, 0)  // lower-left
     this.ctx.drawImage(this.bgLayer.el, 0, 0) // lower-right
 
+    // draw boundary
+    this.renderBoundary(ctx)
+
     // draw shadows
     this.renderShadows(planes, ctx)
 
@@ -266,6 +269,16 @@ export default class View {
         }
       }
     })
+  }
+  renderBoundary(ctx) {
+    ctx.save()
+    ctx.lineWidth = 8
+    ctx.strokeStyle = '#f90'
+    ctx.beginPath()
+    ctx.rect(-WIDTH * 0.5, -HEIGHT * 0.5, WIDTH, HEIGHT)
+    ctx.closePath()
+    ctx.stroke()
+    ctx.restore()
   }
   renderDebug(ctx, w, h, historyTime, predictTime, latestTime) {
     ctx.save()

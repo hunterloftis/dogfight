@@ -58,22 +58,28 @@ export default class Ship extends Entity {
     const dy = Math.sin(angle)
 
     if (this.h > 0) {
-      let accel = 1
-      if (inputs.U) accel *= FASTER
-      if (inputs.D) accel *= SLOWER
-      const speed = secs * SPEED * accel
+      // let accel = 1
+      // if (inputs.U) accel *= FASTER
+      // if (inputs.D) accel *= SLOWER
+      // const speed = secs * SPEED * accel
+      const speed = secs * SPEED
       this.x += dx * speed
       this.y += dy * speed
+
+      if (Math.abs(this.x) > MAP_HALF_SIZE || Math.abs(this.y) > MAP_HALF_SIZE) {
+        this.h = 0
+      }
     } else if (this.h > -4) {
       const speed = secs * SPEED * (4 + this.h) / 4
       this.x += dx * speed
       this.y += dy * speed
     }
 
-    if (this.x <= -MAP_HALF_SIZE) this.x += MAP_HALF_SIZE * 2
-    else if (this.x >= MAP_HALF_SIZE) this.x -= MAP_HALF_SIZE * 2
-    if (this.y <= -MAP_HALF_SIZE) this.y += MAP_HALF_SIZE * 2
-    else if (this.y >= MAP_HALF_SIZE) this.y -= MAP_HALF_SIZE * 2
+    // looping
+    // if (this.x <= -MAP_HALF_SIZE) this.x += MAP_HALF_SIZE * 2
+    // else if (this.x >= MAP_HALF_SIZE) this.x -= MAP_HALF_SIZE * 2
+    // if (this.y <= -MAP_HALF_SIZE) this.y += MAP_HALF_SIZE * 2
+    // else if (this.y >= MAP_HALF_SIZE) this.y -= MAP_HALF_SIZE * 2
 
     this.f = inputs.F
   }
