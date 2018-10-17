@@ -4,9 +4,9 @@ import Missile from './missile.mjs'
 import Keyboard from './keyboard.mjs'
 import View from './view.mjs'
 
-const MAX_LAG = 250
+const MAX_LAG = 300
 const TICK = 16
-const INPUT_LIMIT = 48
+const INPUT_LIMIT = 60
 
 export default class Client {
   constructor(url, canvas) {
