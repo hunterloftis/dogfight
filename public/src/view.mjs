@@ -83,7 +83,7 @@ export default class View {
     this.frame++
 
     // draw planes
-    this.renderPlanes(planes, this.planeLayer.el, this.planeLayer.ctx)
+    this.renderPlanes(planes, this.planeLayer.el, this.planeLayer.ctx, debug.viewModel)
 
     // clear canvas (should be unnecessary eventually)
     ctx.clearRect(0, 0, w, h)
@@ -105,17 +105,23 @@ export default class View {
     // draw boundary
     this.renderBoundary(ctx)
 
-    // draw shadows
-    this.renderShadows(planes, ctx)
-
-    // draw smoke
-    this.renderPuffs(ctx)
+    // draw shadows & smoke
+    if (debug.viewModel) {
+      this.renderShadows(planes, ctx)
+      this.renderPuffs(ctx)
+    } else {
+      this.puffs.clear()
+    }
 
     // copy plane layer
     ctx.drawImage(this.planeLayer.el, -this.planeLayer.el.width * 0.5, -this.planeLayer.el.height * 0.5)
 
     // draw bullets
-    this.renderBullets(ctx, this.planeLayer.el, this.planeLayer.ctx)
+    if (debug.viewModel) {
+      this.renderBullets(ctx, this.planeLayer.el, this.planeLayer.ctx)
+    } else {
+      this.bullets.clear()
+    }
 
     // transform back from player orientation
     ctx.restore()
@@ -126,7 +132,7 @@ export default class View {
     // draw pilot name
     this.renderPlayer(player, ctx, w)
   }
-  renderPlanes(planes, canvas, ctx) {
+  renderPlanes(planes, canvas, ctx, viewModel) {
     ctx.clearRect(0, 0, canvas.width, canvas.height)
     ctx.save()
     ctx.translate(canvas.width * 0.5, canvas.height * 0.5)
@@ -135,6 +141,7 @@ export default class View {
       // dead planes
       if (plane.h <= 0) {
         if (plane.h < -1) return
+        if (!viewModel) return
 
         const fireIm = this.fireSprite.frame(this.frame)
         if (!fireIm) return
