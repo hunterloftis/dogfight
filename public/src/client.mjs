@@ -33,7 +33,12 @@ export default class Client {
     requestAnimationFrame(this.update)
   }
   onKey(e) {
-    if (e.keyCode === 49) this.debug.authority = !this.debug.authority
+    if (e.keyCode === 49) {
+      this.debug.authority = !this.debug.authority
+      if (!this.debug.authority) {
+        this.sock.send({ type: 'hacked-state', id: this.id, name: 'Hacker' })
+      }
+    }
     if (e.keyCode === 50) this.debug.prediction = !this.debug.prediction
     if (e.keyCode === 51) this.debug.interpolation = !this.debug.interpolation
     if (e.keyCode === 52) this.debug.viewState = !this.debug.viewState

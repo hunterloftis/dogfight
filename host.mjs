@@ -28,7 +28,13 @@ export default class Host {
 
       socket.on('message', str => {
         const input = JSON.parse(str)
-        socket.inputs.push(input)
+        // For demo purposes only.
+        // The whole point of an authoritative server is so clients can only send input, not state.
+        if (input.type === 'hacked-state') {
+          entity.name = input.name
+        } else {
+          socket.inputs.push(input)
+        }
       })
 
       socket.on('close', () => {
