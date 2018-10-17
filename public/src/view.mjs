@@ -103,10 +103,10 @@ export default class View {
     this.renderPuffs(ctx)
 
     // copy plane layer
-    ctx.drawImage(this.planeLayer.el, 0, 0)
+    ctx.drawImage(this.planeLayer.el, -this.planeLayer.el.width * 0.5, -this.planeLayer.el.height * 0.5)
 
     // draw bullets
-    this.renderBullets(ctx, this.planeLayer.ctx)
+    this.renderBullets(ctx, this.planeLayer.el, this.planeLayer.ctx)
 
     // transform back from player orientation
     ctx.restore()
@@ -119,12 +119,15 @@ export default class View {
   }
   renderPlanes(planes, canvas, ctx) {
     ctx.clearRect(0, 0, canvas.width, canvas.height)
+    ctx.save()
+    ctx.translate(canvas.width * 0.5, canvas.height * 0.5)
+
     planes.forEach(plane => {
       // dead planes
       if (plane.h <= 0) {
         if (plane.h < -1) return
 
-        const fireIm = this.fire.frame(this.frame)
+        const fireIm = this.fireSprite.frame(this.frame)
         if (!fireIm) return
 
         ctx.save()
@@ -146,16 +149,16 @@ export default class View {
         if (this.frame % 8 === 0) {
           const angle = plane.a - Math.PI / 2
           this.puffs.add({
-            x: plane.x + Math.cos(angle - Math.PI / 2) * planeIm.width * 0.25,
-            y: plane.y + Math.sin(angle - Math.PI / 2) * planeIm.width * 0.25,
+            x: plane.x + Math.cos(angle - Math.PI / 2 * 1.1) * planeIm.width * 0.25,
+            y: plane.y + Math.sin(angle - Math.PI / 2 * 1.1) * planeIm.width * 0.25,
             life: PUFF_LIFE,
             i: Math.floor(Math.random() * 3),
           })
         } else if ((this.frame + 4) % 8 === 0) {
           const angle = plane.a - Math.PI / 2
           this.puffs.add({
-            x: plane.x + Math.cos(angle + Math.PI / 2) * planeIm.width * 0.25,
-            y: plane.y + Math.sin(angle + Math.PI / 2) * planeIm.width * 0.25,
+            x: plane.x + Math.cos(angle + Math.PI / 2 * 1.1) * planeIm.width * 0.25,
+            y: plane.y + Math.sin(angle + Math.PI / 2 * 1.1) * planeIm.width * 0.25,
             life: PUFF_LIFE,
             i: Math.floor(Math.random() * 3),
           })
@@ -190,6 +193,8 @@ export default class View {
       ctx.drawImage(planeIm, planeIm.width * -0.5, planeIm.height * -0.4)
       ctx.restore()
     })
+
+    ctx.restore()
   }
   renderShadows(planes, ctx) {
     planes.forEach(p => {
@@ -223,7 +228,9 @@ export default class View {
       ctx.restore()
     })
   }
-  renderBullets(ctx, hitCtx) {
+  renderBullets(ctx, hitCanvas, hitCtx) {
+    const x0 = hitCanvas.width * 0.5
+    const y0 = hitCanvas.height * 0.5
     const sparkIm = this.sparkSprite.frame(0)
     ctx.fillStyle = '#fff'
     ctx.strokeStyle = '#ffff99'
@@ -246,7 +253,7 @@ export default class View {
       ctx.stroke()
 
       if (sparkIm) {
-        const pix = hitCtx.getImageData(b.x, b.y, 1, 1).data
+        const pix = hitCtx.getImageData(x0 + b.x, y0 + b.y, 1, 1).data
         if (pix[3] > 0) {
           ctx.drawImage(sparkIm, b.x - sparkIm.width * 0.5, b.y - sparkIm.height * 0.5)
           this.bullets.delete(b)
