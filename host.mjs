@@ -4,7 +4,7 @@ import { performance } from 'perf_hooks'
 import words from './words.json'
 
 const TICK = 16
-const UPDATE_INTERVAL = 100
+const UPDATE_INTERVAL = process.env.INTERVAL || 100
 
 export default class Host {
   constructor(server) {
