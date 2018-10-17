@@ -23,7 +23,20 @@ export default class Client {
     this.inputTime = performance.now()
     this.frameTime = this.inputTime
     this.historyTime = 0
+    this.debug = {
+      authority: true,
+      prediction: true,
+      interpolation: true,
+      viewModel: true,
+    }
+    document.addEventListener('keypress', this.onKey.bind(this))
     requestAnimationFrame(this.update)
+  }
+  onKey(e) {
+    if (e.keyCode === 49) this.debug.authority = !this.debug.authority
+    if (e.keyCode === 50) this.debug.prediction = !this.debug.prediction
+    if (e.keyCode === 51) this.debug.interpolation = !this.debug.interpolation
+    if (e.keyCode === 52) this.debug.viewModel = !this.debug.viewModel
   }
   update() {
     const now = performance.now()
@@ -124,9 +137,12 @@ export default class Client {
     if (!prev || !next) return
 
     const entities = Object.values(this.entities)
-    const predictTime = next.time + this.inputs.length * TICK
-    const latestTime = next.time
-    this.view.render(entities, this.id, this.historyTime, predictTime, latestTime)
+    const time = {
+      history: this.historyTime,
+      predict: next.time + this.inputs.length * TICK,
+      latest: next.time,
+    }
+    this.view.render(entities, this.id, time, this.debug)
   }
 }
 

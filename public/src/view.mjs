@@ -73,7 +73,7 @@ export default class View {
     this.canvas.width = window.innerWidth
     this.canvas.height = window.innerHeight
   }
-  render(entities, id, historyTime, predictTime, latestTime) {
+  render(entities, id, time, debug) {
     const ctx = this.ctx
     const w = this.canvas.width
     const h = this.canvas.height
@@ -121,7 +121,7 @@ export default class View {
     ctx.restore()
 
     // draw debug info
-    this.renderDebug(ctx, w, h, historyTime, predictTime, latestTime)
+    this.renderDebug(ctx, w, h, time, debug)
 
     // draw pilot name
     this.renderPlayer(player, ctx, w)
@@ -280,19 +280,27 @@ export default class View {
     ctx.stroke()
     ctx.restore()
   }
-  renderDebug(ctx, w, h, historyTime, predictTime, latestTime) {
+  renderDebug(ctx, w, h, time, debug) {
     ctx.save()
     if (this.frame % 20 === 0) {
-      this.histT = Math.round(historyTime)
-      this.predT = Math.round(predictTime)
-      this.lateT = Math.round(latestTime)
+      this.histT = Math.round(time.history)
+      this.predT = Math.round(time.predict)
+      this.lateT = Math.round(time.latest)
     }
     const predict = this.predT - this.histT
     const behind = this.lateT - this.histT
     ctx.textAlign = 'right'
     ctx.fillStyle = '#fff'
-    ctx.font = '14px sans-serif'
-    const stats = [`prediction (ahead): ${predict}`, `interpolation (behind): ${behind}`]
+    ctx.font = '18px sans-serif'
+    const stats = [
+      `prediction (ahead): ${predict}`,
+      `interpolation (behind): ${behind}`,
+      '',
+      `1. Authority: ${debug.authority ? '✅' : '❌'}`,
+      `2. Prediction: ${debug.prediction ? '✅' : '❌'}`,
+      `3. Interpolation: ${debug.interpolation ? '✅' : '❌'}`,
+      `4. View-Model: ${debug.viewModel ? '✅' : '❌'}`,
+    ]
     stats.forEach((str, i) => {
       ctx.fillText(str, w - 32, 64 + i * 32)
     })
