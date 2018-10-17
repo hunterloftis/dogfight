@@ -45,34 +45,31 @@ export default class Ship extends Entity {
   }
   simulate(tick, inputs = {}) {
     const secs = tick / 1000
-
-    if (this.h <= 0) {
-      this.h -= secs
-    } else {
-      if (inputs.L) this.a -= secs * TURN_SPEED
-      if (inputs.R) this.a += secs * TURN_SPEED
-    }
-
     const angle = this.a - Math.PI / 2
     const dx = Math.cos(angle)
     const dy = Math.sin(angle)
 
-    if (this.h > 0) {
-      // let accel = 1
-      // if (inputs.U) accel *= FASTER
-      // if (inputs.D) accel *= SLOWER
-      // const speed = secs * SPEED * accel
+    if (this.h <= 0) {
+      this.h -= secs
+      this.f = 0
+
+      if (this.h > -4) {
+        const speed = secs * SPEED * (4 + this.h) / 4
+        this.x += dx * speed
+        this.y += dy * speed
+      }
+    } else {
+      if (inputs.L) this.a -= secs * TURN_SPEED
+      if (inputs.R) this.a += secs * TURN_SPEED
+
       const speed = secs * SPEED
       this.x += dx * speed
       this.y += dy * speed
+      this.f = inputs.F ? 1 : 0
 
       if (Math.abs(this.x) > MAP_HALF_SIZE || Math.abs(this.y) > MAP_HALF_SIZE) {
         this.h = 0
       }
-    } else if (this.h > -4) {
-      const speed = secs * SPEED * (4 + this.h) / 4
-      this.x += dx * speed
-      this.y += dy * speed
     }
 
     // looping
@@ -80,8 +77,6 @@ export default class Ship extends Entity {
     // else if (this.x >= MAP_HALF_SIZE) this.x -= MAP_HALF_SIZE * 2
     // if (this.y <= -MAP_HALF_SIZE) this.y += MAP_HALF_SIZE * 2
     // else if (this.y >= MAP_HALF_SIZE) this.y -= MAP_HALF_SIZE * 2
-
-    this.f = inputs.F
   }
   interact(tick, other) {
     if (!this.f) return

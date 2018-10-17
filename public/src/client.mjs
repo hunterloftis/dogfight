@@ -118,6 +118,11 @@ export default class Client {
     })
   }
   predictLocal() {
+    if (!this.debug.prediction) {
+      this.inputs = []
+      return
+    }
+
     const next = this.history[1]
     const controlled = this.entities[this.id]
     if (!next) return
