@@ -119,8 +119,8 @@ export default class Host {
 function pilotName() {
   const fi = Math.floor(Math.random() * words.adjectives.length)
   const first = words.adjectives[fi][0].toUpperCase() + words.adjectives[fi].slice(1)
-  const nouns = words.nouns.filter(n => n[0].toLowerCase() === first[0].toLowerCase())
-  const li = Math.floor(Math.random() * nouns.length)
-  const last = nouns[li][0].toUpperCase() + nouns[li].slice(1)
+  const animals = words.animals.filter(n => n[0].toLowerCase() === first[0].toLowerCase())
+  const li = Math.floor(Math.random() * animals.length)
+  const last = animals[li][0].toUpperCase() + animals[li].slice(1)
   return `${first} ${last}`
 }
