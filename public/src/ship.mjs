@@ -98,7 +98,7 @@ export default class Ship extends Entity {
     const damage = BULLET_DAMAGE * Math.min(falloff, 1)
     other.h = Math.max(other.h - damage, 0)
     if (other.h === 0) {
-      return [{ msg: `${this.name} 💥 ${other.name}!` }]
+      return [{ msg: `${this.name} ☠️ ${other.name}!` }]
     }
   }
 }
