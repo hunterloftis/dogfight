@@ -23,6 +23,7 @@ export default class View {
     this.canvas.style.left = 0
     this.canvas.style.top = 0
     this.ctx = canvas.getContext('2d')
+    this.loaded = false
 
     this.frame = 0
     this.bullets = new Set()
@@ -52,6 +53,7 @@ export default class View {
     this.fireSprite.load()
     this.puffSprite = new Sprite(['/img/puff-0.png', '/img/puff-1.png', '/img/puff-2.png', '/img/smoke-0.png', '/img/smoke-1.png', '/img/smoke-2.png'], 1)
     this.puffSprite.load()
+    this.loaded = true
   }
   async drawBg() {
     const ctx = this.bgLayer.ctx
@@ -74,6 +76,8 @@ export default class View {
     this.canvas.height = window.innerHeight
   }
   render(entities, id, time, events, debug) {
+    if (!this.loaded) return
+
     const ctx = this.ctx
     const w = this.canvas.width
     const h = this.canvas.height
