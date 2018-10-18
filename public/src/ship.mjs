@@ -8,7 +8,6 @@ const BULLET_DAMAGE = 0.008
 const BULLET_NEAR = 300
 const BULLET_FAR = 1000
 const TARGET_SIZE = 256
-const FASTER = 1.6
 const MAP_HALF_SIZE = 1024
 
 export default class Ship extends Entity {
@@ -61,9 +60,8 @@ export default class Ship extends Entity {
       let accel = 1
       if (inputs.L) this.a -= secs * TURN_SPEED
       if (inputs.R) this.a += secs * TURN_SPEED
-      if (inputs.U) accel *= FASTER
 
-      const speed = secs * SPEED * accel
+      const speed = secs * SPEED
       this.x += dx * speed
       this.y += dy * speed
       this.f = inputs.F ? 1 : 0
