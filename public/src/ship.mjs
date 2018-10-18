@@ -59,10 +59,13 @@ export default class Ship extends Entity {
         this.y += dy * speed
       }
     } else {
+      let accel = 1
       if (inputs.L) this.a -= secs * TURN_SPEED
       if (inputs.R) this.a += secs * TURN_SPEED
+      if (inputs.U) accel *= FASTER
+      if (inputs.D) accel *= SLOWER
 
-      const speed = secs * SPEED
+      const speed = secs * SPEED * accel
       this.x += dx * speed
       this.y += dy * speed
       this.f = inputs.F ? 1 : 0

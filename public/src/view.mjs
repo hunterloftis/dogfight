@@ -105,9 +105,11 @@ export default class View {
     // draw boundary
     this.renderBoundary(ctx)
 
-    // draw shadows & smoke
+    // draw shadows
+    this.renderShadows(planes, ctx)
+
+    // draw smoke
     if (debug.viewState) {
-      this.renderShadows(planes, ctx)
       this.renderPuffs(ctx)
     } else {
       this.puffs.clear()
