@@ -5,7 +5,7 @@ import words from './words.json'
 
 const TICK = 16
 const UPDATE_INTERVAL = process.env.INTERVAL || 100
-const MAX_APPLIED_NULLS = 10
+const MAX_APPLIED_NULLS = 30
 
 export default class Host {
   constructor(server) {
