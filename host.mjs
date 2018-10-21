@@ -83,27 +83,32 @@ export default class Host {
   }
   simulate(en, sockets, children) {
     const socket = sockets.find(s => s.id === en.id)
-    // TODO: clear all ignorable input immediately
-    const input = socket ? socket.inputs.shift() : undefined
-    if (input) {
-      totalInputs++
-      if (totalInputs % 100 === 0) {
-        console.log('total inputs:', totalInputs)
-      }
-      if (input.z && socket.appliedNulls > 0) { // ignorable input
-        socket.appliedNulls--
-      } else {  // unignorable input
-        const ch = en.simulate(TICK, input) || []
-        children.push(...ch)
-      }
-      socket.applied = input.n
-    } else {
+    if (!socket) {
       const ch = en.simulate(TICK) || []
       children.push(...ch)
-      if (socket) {
-        socket.appliedNulls++
-      }
+      return
     }
+
+    const input = socket.inputs.shift()
+    if (!input) {
+      const ch = en.simulate(TICK) || []
+      children.push(...ch)
+      socket.appliedNulls++
+      return
+    }
+
+    totalInputs++
+    if (totalInputs % 100 === 0) {
+      console.log('total inputs:', totalInputs)
+    }
+
+    if (input.z && socket.appliedNulls > 0) { // ignorable input
+      socket.appliedNulls--
+    } else {                                  // unignorable input
+      const ch = en.simulate(TICK, input) || []
+      children.push(...ch)
+    }
+    socket.applied = input.n
   }
   interact(en1, en2) {
     const ev = en1.interact(TICK, en2) || []
