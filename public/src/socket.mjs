@@ -1,11 +1,12 @@
 export default class Socket {
-  constructor(url) {
+  constructor(url, limit = 60) {
     this.ws = new WebSocket(url)
     this.received = []
 
     this.ws.addEventListener('message', e => {
       const msg = JSON.parse(e.data)
       this.received.push(msg)
+      this.received = this.received.slice(-limit)
     })
     this.ws.addEventListener('close', e => {
       console.log('socket closed')

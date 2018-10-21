@@ -4,9 +4,6 @@ import Missile from './missile.mjs'
 import Keyboard from './keyboard.mjs'
 import View from './view.mjs'
 
-let totalTicks = 0
-let totalInputs = 0
-
 const MAX_LAG = 500
 const TICK = 16
 const INPUT_LIMIT = 75
@@ -73,8 +70,6 @@ export default class Client {
         const input = { ...keys, n: this.sequence++, z: isNull } // state, sequence, isNull
         this.inputs.push(input)
         this.sock.send(input)
-      } else {
-        console.log('this.inputs.length:', this.inputs.length)
       }
     }
   }
@@ -85,7 +80,6 @@ export default class Client {
         return
       }
       if (msg.type === 'state') { // state: { time, entities, sequence, events }
-        console.log('received update')
         this.history.push(msg.state)
         if (msg.state.events) {
           this.events.push(...msg.state.events)
@@ -100,17 +94,15 @@ export default class Client {
     this.frameTime = now
     if (this.history.length < 2) return
 
+    // discard old history (always keep the most recent 2 states)
+    this.history = this.history.slice(-2)
+
     if (!this.historyTime) {
       this.historyTime = this.history[0].time
     }
 
     // advance the "playback time" playing through authoritative state snapshots
-    const max = this.history.length - 1
-    const last = this.history[max]
-    this.historyTime = Math.max(this.historyTime + delta, last.time - MAX_LAG)
-
-    // discard old history (always keep the most recent 2 states)
-    this.history = this.history.slice(-2)
+    this.historyTime = Math.max(this.historyTime + delta, this.history[1].time - MAX_LAG)
   }
   updateEntities() {
     const prev = this.history[0]

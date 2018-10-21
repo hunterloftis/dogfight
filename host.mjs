@@ -3,11 +3,9 @@ import WebSocket from 'ws'
 import { performance } from 'perf_hooks'
 import words from './words.json'
 
-let totalTicks = 0
-let totalInputs = 0
-
 const TICK = 16
 const UPDATE_INTERVAL = process.env.INTERVAL || 100
+const MAX_APPLIED_NULLS = 10
 
 export default class Host {
   constructor(server) {
@@ -63,12 +61,6 @@ export default class Host {
     if (!sockets.length) return
 
     for (let t = 0; t < ticks; t++) {
-      if (sockets.length) {
-        totalTicks++
-        if (totalTicks % 100 === 0) {
-          console.log('total ticks:', totalTicks)
-        }
-      }
       const entities = Object.values(this.entities)
       const children = []
       entities.forEach(en => this.simulate(en, sockets, children))
@@ -93,13 +85,8 @@ export default class Host {
     if (!input) {
       const ch = en.simulate(TICK) || []
       children.push(...ch)
-      socket.appliedNulls++
+      socket.appliedNulls = Math.min(socket.appliedNulls + 1, MAX_APPLIED_NULLS)
       return
-    }
-
-    totalInputs++
-    if (totalInputs % 100 === 0) {
-      console.log('total inputs:', totalInputs)
     }
 
     if (input.z && socket.appliedNulls > 0) { // ignorable input
