@@ -73,16 +73,8 @@ export default class Client {
         const input = { ...keys, n: this.sequence++, z: isNull } // state, sequence, isNull
         this.inputs.push(input)
         this.sock.send(input)
-        totalInputs++
-        if (totalInputs % 100 === 0) {
-          console.log('total inputs:', totalInputs)
-        }
       } else {
         console.log('this.inputs.length:', this.inputs.length)
-      }
-      totalTicks++
-      if (totalTicks % 100 === 0) {
-        console.log('total ticks:', totalTicks)
       }
     }
   }
@@ -93,6 +85,7 @@ export default class Client {
         return
       }
       if (msg.type === 'state') { // state: { time, entities, sequence, events }
+        console.log('received update')
         this.history.push(msg.state)
         if (msg.state.events) {
           this.events.push(...msg.state.events)
