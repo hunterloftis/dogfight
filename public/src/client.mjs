@@ -4,6 +4,9 @@ import Missile from './missile.mjs'
 import Keyboard from './keyboard.mjs'
 import View from './view.mjs'
 
+let totalTicks = 0
+let totalInputs = 0
+
 const MAX_LAG = 500
 const TICK = 16
 const INPUT_LIMIT = 75
@@ -69,7 +72,17 @@ export default class Client {
       if (this.inputs.length < INPUT_LIMIT) {
         const input = { ...keys, n: this.sequence++, z: isNull } // state, sequence, isNull
         this.inputs.push(input)
-        this.sock.send(input) // TODO: is there a way to send less data? for example, send the # of empty inputs before a new input and have them filled in on the other side
+        this.sock.send(input)
+        totalInputs++
+        if (totalInputs % 100 === 0) {
+          console.log('total inputs:', totalInputs)
+        }
+      } else {
+        console.log('this.inputs.length:', this.inputs.length)
+      }
+      totalTicks++
+      if (totalTicks % 100 === 0) {
+        console.log('total ticks:', totalTicks)
       }
     }
   }

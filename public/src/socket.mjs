@@ -17,8 +17,9 @@ export default class Socket {
     return r
   }
   send(msg) {
-    if (this.ws.readyState !== WebSocket.OPEN) return
+    if (this.ws.readyState !== WebSocket.OPEN) return false
     const str = JSON.stringify(msg)
     this.ws.send(str)
+    return true
   }
 }

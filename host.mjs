@@ -3,6 +3,9 @@ import WebSocket from 'ws'
 import { performance } from 'perf_hooks'
 import words from './words.json'
 
+let totalTicks = 0
+let totalInputs = 0
+
 const TICK = 16
 const UPDATE_INTERVAL = process.env.INTERVAL || 100
 
@@ -63,12 +66,22 @@ export default class Host {
     // TODO: make clearer that every tick, we apply some kind of input
     // it's either explicit (in the queue) or implied (implied null)
     for (let t = 0; t < ticks; t++) {
+      if (sockets.length) {
+        totalTicks++
+        if (totalTicks % 100 === 0) {
+          console.log('total ticks:', totalTicks)
+        }
+      }
       const entities = Object.values(this.entities)
       const children = []
       entities.forEach(en => {
         const socket = sockets.find(s => s.id === en.id)
         const input = socket ? socket.inputs.shift() : undefined
         if (input) {
+          totalInputs++
+          if (totalInputs % 100 === 0) {
+            console.log('total inputs:', totalInputs)
+          }
           if (input.z && socket.appliedNulls > 0) { // ignorable input
             socket.appliedNulls--
           } else {  // unignorable input
